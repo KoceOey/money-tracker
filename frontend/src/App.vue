@@ -5,7 +5,7 @@
       <div class="sidebar">
         <h2>Money Tracker</h2>
         <button @click="navigate('Home')">Home</button>
-        <button @click="navigate('History')">About</button>
+        <button @click="navigate('Transaction')">Transaction</button>
         <button @click="navigate('Accounts')">Accounts</button>
         <button @click="navigate('Settings')">Settings</button>
       </div>
@@ -14,7 +14,7 @@
       <div class="main-content">
         <h1>{{ title }} Page</h1>
         <HomeSection v-if="currentPage === 'Home'" />
-        <HistorySection v-if="currentPage === 'History'" />
+        <TransactionSection v-if="currentPage === 'Transaction'" />
         <AccountsSection v-if="currentPage === 'Accounts'" />
         <SettingsSection v-if="currentPage === 'Settings'" />
       </div>
@@ -24,7 +24,7 @@
 
 <script>
 // Import components for each page
-import HistorySection from './components/HistorySection.vue';
+import TransactionSection from './components/TransactionSection.vue';
 import AccountsSection from './components/AccountsSection.vue';
 import SettingsSection from './components/SettingsSection.vue';
 import HomeSection from './components/HomeSection.vue';
@@ -44,7 +44,7 @@ export default {
   },
   components: {
     HomeSection,
-    HistorySection,
+    TransactionSection,
     SettingsSection,
     AccountsSection,
   },
@@ -69,7 +69,7 @@ body {
 /* Sidebar styling */
 .sidebar {
   width: 20%;
-  background-color: #CDB599;
+  background-color: #967B6B;
   color: white;
   padding: 20px;
   display: flex;
