@@ -1,50 +1,33 @@
 <template>
   <div id="transaction">
-    <AddButton :currentPage="currentPage"/>
-    <TransactionHeader/>
-    <div class="dates">
-      <h2 class="date">1</h2>
-      <div class="trans">
+    <AddButton @refresh-page="fetchTransactions"/>
+    <TransactionHeader :income="income" :expenses="expenses" :total="total"/>
+    <TransactionForm :form-type="2" :tr_id="tr_id" v-if="this.updating" @update-variable="closed"/>
+    <div class="dates" v-for="(transactions, date) in transactions_by_dates" :key="date">
+      <h2 class="date">{{ date }}</h2>
+      <div class="trans" v-for="transaction in transactions" :key="transaction.transaction_id">
         <table>
           <tr>
-            <td rowspan="2" class="tr-cat">Category</td>
-            <td class="tr-desc">Description</td>
-            <td rowspan="2" class="tr-amount">Amount</td>
+            <td rowspan="2" class="tr-cat">{{ transaction.category.category }}</td>
+            <td class="tr-desc">{{ transaction.description }}</td>
+            <td rowspan="2" class="tr-amount" v-if="transaction.trtype_id == 1" style="color: blue;">{{ transaction.amount }}</td>
+            <td rowspan="2" class="tr-amount" v-if="transaction.trtype_id == 2" style="color: red;">{{ transaction.amount }}</td>
+            <td rowspan="2" class="tr-amount" v-if="transaction.trtype_id == 3" style="color: black;">{{ transaction.amount }}</td>
             <td rowspan="2" class="tr-btn">
-              <button>
+              <button @click="editTransaction(transaction.transaction_id)">
                 <img src="../assets/edit.png" alt="Edit">
               </button>
             </td>
             <td rowspan="2" class="tr-btn">
-              <button>
+              <button @click="deleteTransaction(transaction.transaction_id)">
                 <img src="../assets/bin.png" alt="Delete">
               </button>
             </td>
           </tr>
           <tr>
-            <td class="tr-acc">Accounts</td>
-          </tr>
-        </table>
-      </div>
-      <div class="trans">
-        <table>
-          <tr>
-            <td rowspan="2" class="tr-cat">Category</td>
-            <td class="tr-desc">Description</td>
-            <td rowspan="2" class="tr-amount">Amount</td>
-            <td rowspan="2" class="tr-btn">
-              <button>
-                <img src="../assets/edit.png" alt="Edit">
-              </button>
-            </td>
-            <td rowspan="2" class="tr-btn">
-              <button>
-                <img src="../assets/bin.png" alt="Delete">
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td class="tr-acc">Accounts</td>
+            <td class="tr-acc" v-if="transaction.trtype_id == 1">{{ transaction.toAccount.account_name }}</td>
+            <td class="tr-acc" v-if="transaction.trtype_id == 2">{{ transaction.fromAccount.account_name }}</td>
+            <td class="tr-acc" v-if="transaction.trtype_id == 3">{{ transaction.fromAccount.account_name }} -> {{ transaction.toAccount.account_name }}</td>
           </tr>
         </table>
       </div>
@@ -54,18 +37,103 @@
 <script>
   import TransactionHeader from './TransactionHeader.vue';
   import AddButton from './AddButton.vue';
+  import TransactionForm from './TransactionForm.vue';
   export default {
   data() {
     return {
-      currentPage: "Transaction"
+      currentPage: "Transaction",
+      transactions: [],
+      transactions_by_dates: {},
+      income: Number(0), 
+      expenses: Number(0), 
+      total: Number(0), 
+      tr_id: 0,
+      updating: false,
+      deleting: false
     };
   },
   methods: {
+    async fetchTransactions() {
+      try {
+        const response = await fetch("http://localhost:5000/transactions", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        this.transactions = data;
+        console.log("Fetched Transactions");
+        this.groupTransactionsByDate();
+        this.updateData();
+      } catch (error) {
+        console.error("Failed to fetch transactions:", error.message);
+      }
+    },
+    groupTransactionsByDate() {
+      this.transactions_by_dates = this.transactions.reduce((acc, transaction) => {
+        const date = transaction.tr_date.split("T")[0];
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(transaction);
+        return acc;
+      }, {});
+    },
+    editTransaction(tr_id){
+      this.tr_id = tr_id;
+      this.updating = true;
+    },
+    closed(updating){
+      this.updating = updating;
+      this.fetchTransactions();
+    },
+    async deleteTransaction(tr_id){
+      try {
+        const response = await fetch(`http://localhost:5000/transactions/` + tr_id, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        
+        await response.json();
+        console.log("Transaction Deleted");
+        this.fetchTransactions();
+      } catch (error) {
+        console.error("Failed to delete transaction:", error.message);
+      }
+    },
+    updateData(){
+      this.income = Number(0);
+      this.expenses = Number(0);
+      this.transactions.forEach((transaction) => {
+        if(transaction.trtype_id == 1){
+          this.income += Number(transaction.amount);
+        }else if(transaction.trtype_id == 2){
+          this.expenses += Number(transaction.amount);
+        }
+      });
+      this.total = this.income - this.expenses;
+    }
+  },
+  mounted() {
+    // Fetch transactions when the component is mounted
+    this.fetchTransactions();
   },
   components: {
     TransactionHeader,
-    AddButton
+    AddButton,
+    TransactionForm,
   },
 };
 </script>
@@ -114,19 +182,22 @@ td {
 
 .tr-cat{
   width: 20%;
+  font-size: 22px;
 }
 
-/* .tr-desc{
-  
-} */
+.tr-desc{
+  font-size: 18px;
+}
 
 .tr-amount{
+  font-size: 22px;
   width: 20%;
 }
 
-/* .tr-acc{
-  
-} */
+.tr-acc{
+  font-style: bold;
+  opacity: 40%;
+}
 
 .tr-btn{
   width: 40px;
@@ -146,29 +217,5 @@ td {
 
 .tr-btn button:hover {
   opacity: 0.8; 
-}
-
-.floating-button {
-  position: fixed; 
-  bottom: 20px; 
-  right: 20px; 
-  width: 60px; 
-  height: 60px;
-  border: none;
-  border-radius: 50%; 
-  background-color: #644147; 
-  color: white;
-  font-size: 24px; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.floating-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
 }
 </style>

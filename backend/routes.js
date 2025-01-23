@@ -9,6 +9,7 @@ router.post('/transactions', transactionController.addTransaction);
 router.put('/transactions/:id', transactionController.updateTransaction);
 router.delete('/transactions/:id', transactionController.deleteTransaction);
 router.get('/transactions', transactionController.getAllTransactions);
+router.get('/transactions/:id', transactionController.getSingleTransaction);
 
 // Account routes
 router.post('/accounts', accountController.addAccount);

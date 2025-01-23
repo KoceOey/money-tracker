@@ -119,7 +119,7 @@ const deleteTransaction = async (req, res) => {
     if (!transaction) {
       return res.status(404).json({ error: 'Transaction not found' });
     }
-    const trtype_id = transaction.type.type; 
+    const trtype_id = transaction.type.trtype_id; 
 
     // Adjust account balances before deleting (reverse the transaction)
     if (trtype_id == 1){
@@ -160,6 +160,30 @@ const getAllTransactions = async (req, res) => {
   }
 };
 
+const getSingleTransaction = async (req, res) => {
+  try {
+    const transactionId = req.params.id;
+
+    const transaction = await Transaction.findByPk(transactionId, {
+      include: [
+        { model: TransactionType, as: 'type' }, 
+        { model: Account, as: 'fromAccount' },
+        { model: Account, as: 'toAccount' },
+        { model: TransactionCategory, as: 'category' },
+      ],
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    res.json(transaction);
+  } catch (error) {
+    console.error('Error getting transaction:', error);
+    res.status(500).json({ error: 'Failed to get transaction' });
+  }
+};
+
 const getAllTransactionTypes = async (req, res) => {
   try {
     const transactionTypes = await TransactionType.findAll();
@@ -190,6 +214,7 @@ module.exports = {
   updateTransaction,
   deleteTransaction,
   getAllTransactions,
+  getSingleTransaction,
   getAllTransactionTypes,
   getTransactionCategoriesByType,
 };

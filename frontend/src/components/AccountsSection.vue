@@ -1,13 +1,12 @@
 <template>
   <div id="accounts">
-    <AddButton :currentPage="currentPage"/>
-    <AccountsHeader/>
-    <div class="list">
+    <AccountsHeader :total="total"/>
+    <div class="list" v-for="account in accounts" :key="account.account_id">
       <table>
         <tr>
-          <td class="name">Account Name</td>
-          <td class="desc">Description</td>
-          <td class="amount">1000000</td>
+          <td class="name">{{ account.account_name }}</td>
+          <td class="desc">{{ account.description }}</td>
+          <td class="amount">{{ account.balance }}</td>
           <td class="btn">
             <button>
               <img src="../assets/edit.png" alt="Edit">
@@ -25,19 +24,49 @@
 </template>
 <script>
   import AccountsHeader from './AccountsHeader.vue';
-  import AddButton from './AddButton.vue';
   export default {
   data() {
     return {
-      currentPage: "Accounts"
+      accounts: [],
+      total: '',
     };
   },
   methods: {
+    async fetchAccounts() {
+      try {
+        const response = await fetch("http://localhost:5000/accounts", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        this.accounts = data;
+        this.accounts.shift();
+        console.log("Fetched Accounts");
+        this.updateData();
+      } catch (error) {
+        console.error("Failed to fetch accounts:", error.message);
+      }
+    },
+    updateData(){
+      this.total = Number(0);
+      this.accounts.forEach((account) => {
+        this.total += Number(account.balance);
+      });
+    }
+  },
+  mounted() {
+    // Fetch accounts when the component is mounted
+    this.fetchAccounts();
   },
   components: {
     AccountsHeader,
-    AddButton
   },
 };
 </script>

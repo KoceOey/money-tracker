@@ -7,13 +7,34 @@
         <td>Total</td>
       </tr>
       <tr class="header-value">
-        <td>1000000</td>
-        <td>1000000</td>
-        <td>1000000</td>
+        <td>{{ income }}</td>
+        <td>{{ expenses }}</td>
+        <td>{{ total }}</td>
       </tr>
     </table>
   </div>
 </template>
+<script>
+export default {
+  props: {
+    income: {
+      type: Number,
+      required: true,
+    },
+    expenses: {
+      type: Number,
+      required: true,
+    },
+    total: {
+      type: Number,
+      required: true,
+    },
+  },
+  methods: {
+    
+  },
+};
+</script>
 <style scoped>
 .header {
   position: fixed; 

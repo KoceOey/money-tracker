@@ -3,12 +3,24 @@
       <table>
         <tr>
           <td class="header-title">Total :</td>
-          <td class="header-value">1000000</td>
+          <td class="header-value">{{ total }}</td>
         </tr>
       </table>
     </div>
 </template>
-
+<script>
+export default {
+  props: {
+    total: {
+      type: Number,
+      required: true,
+    },
+  },
+  methods: {
+    
+  },
+};
+</script>
 <style scoped>
 .header {
   position: fixed; 

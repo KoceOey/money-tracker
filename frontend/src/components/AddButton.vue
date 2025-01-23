@@ -1,20 +1,15 @@
 <template>
   <button @click="clicked()" class="floating-button">+</button>
-  <TransactionForm v-if="this.pressed && this.currentPage === 'Transaction'" @update-variable="closed"/>
+  <TransactionForm :formType="formType" v-if="this.pressed" @update-variable="closed"/>
 </template>
 <script>
 import TransactionForm from './TransactionForm.vue';
 export default {
   data(){
     return{
-      pressed: false
+      pressed: false,
+      formType: 1
     }
-  },
-  props: {
-    currentPage: {
-      type: String,
-      required: true,
-    },
   },
   components: {
     TransactionForm
@@ -25,6 +20,7 @@ export default {
     },
     closed(press) {
       this.pressed = press;
+      this.$emit('refresh-page');
     }
   },
 };

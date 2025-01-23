@@ -5,7 +5,7 @@
       <button class="close-button" @click="closeForm">&times;</button>
 
       <!-- Buttons -->
-      <div class="button-group">
+      <div class="button-group" v-if="formType!==2">
         <button 
           v-for="btn in buttons" 
           :key="btn.value" 
@@ -20,7 +20,7 @@
       <form @submit.prevent="submitForm">
         <div class="form-group">
           <label for="date">Date:</label>
-          <input type="date" id="date" v-model="formData.date" required />
+          <input type="date" id="date" v-model="formData.tr_date" required />
         </div>
         
         <div class="form-group">
@@ -30,25 +30,25 @@
 
         <div class="form-group" v-if="this.currentForm === 'expenses' || this.currentForm === 'income'" >
           <label for="category">Category:</label>
-          <select id="category" v-model="formData.category" required>
+          <select id="category" v-model="formData.trcategory_id" required>
             <option value="">Select a category</option>
-            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+            <option v-for="cat in categories" :key="cat.trcategory_id" :value="cat.trcategory_id">{{ cat.category }}</option>
           </select>
         </div>
 
         <div class="form-group" v-if="this.currentForm === 'expenses' || this.currentForm === 'transfer'">
           <label for="accountsFrom">From Accounts:</label>
-          <select id="accountsFrom" v-model="formData.accountFrom" required>
+          <select id="accountsFrom" v-model="formData.from_account_id" required>
             <option value="">Select an account</option>
-            <option v-for="acc in accounts" :key="acc" :value="acc">{{ acc }}</option>
+            <option v-for="acc in accounts" :key="acc.account_id" :value="acc.account_id">{{ acc.account_name }}</option>
           </select>
         </div>
 
         <div class="form-group" v-if="this.currentForm === 'income' || this.currentForm === 'transfer'">
           <label for="accountsTo">To Accounts:</label>
-          <select id="accountsTo" v-model="formData.accountTo" required>
+          <select id="accountsTo" v-model="formData.to_account_id" required>
             <option value="">Select an account</option>
-            <option v-for="acc in accounts" :key="acc" :value="acc">{{ acc }}</option>
+            <option v-for="acc in accounts" :key="acc.account_id" :value="acc.account_id">{{ acc.account_name }}</option>
           </select>
         </div>
 
@@ -56,7 +56,7 @@
           <label for="description">Description:</label>
           <textarea id="description" v-model="formData.description" rows="3"></textarea>
         </div>
-
+        
         <button type="submit">Submit</button>
       </form>
     </div>
@@ -68,26 +68,45 @@ export default {
   data() {
     return {
       buttons: [
-        { label: "Income", value: "income" },
-        { label: "Expenses", value: "expenses" },
-        { label: "Transfer", value: "transfer" }
+        { label: "Income", value: "income"},
+        { label: "Expenses", value: "expenses"},
+        { label: "Transfer", value: "transfer"}
       ],
-      currentForm: "expenses", // Default no form shown
+      currentForm: "",
       formData: {
+        trtype_id: "",
+        from_account_id: "",
+        to_account_id: "",
+        trcategory_id: "",
+        tr_date: "",
         amount: "",
-        category: "",
-        accountFrom: "",
-        accountTo: "",
         description: "",
-        date: ""  // Add date field to the formData
       },
-      categories: ["Food", "Rent", "Salary", "Utilities", "Others"],
-      accounts: ["Bank Account", "Credit Card", "Cash"]
+      categories: [],
+      accounts: [],
+      endpoint: '',
+      apiMethod: '',
     };
+  },
+  props: {
+    formType: {
+      type: Number,
+    },
+    tr_id: {
+      type: Number,
+    }
   },
   methods: {
     showForm(form) {
       this.currentForm = form;
+      if(form == "income"){
+        this.formData.trtype_id = 1;
+      }else if(form == "expenses"){
+        this.formData.trtype_id = 2;
+      }else{
+        this.formData.trtype_id = 3;
+      }
+      this.fetchCategories();
     },
     closeForm() {
       this.currentForm = null;
@@ -96,20 +115,33 @@ export default {
     },
     async submitForm() {
       try {
-        const response = await fetch("https://api.example.com/submit", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(this.formData)
+        if (this.formType == 1) {
+          this.endpoint = "http://localhost:5000/transactions";
+          this.apiMethod = "POST";
+        } else {
+          this.endpoint = "http://localhost:5000/transactions/" + this.tr_id;
+          this.apiMethod = "PUT";
+        }
+
+        // Create FormData object
+        const formData = new FormData();
+        for (const key in this.formData) {
+          if (this.formData[key] !== null && this.formData[key] !== "") {
+            formData.append(key, this.formData[key]);
+          }
+        }
+
+        const response = await fetch(this.endpoint, {
+          method: this.apiMethod,
+          body: formData, // Use FormData directly
         });
 
         if (!response.ok) {
           throw new Error("Failed to submit form");
         }
 
-        const result = await response.json();
-        alert("Form submitted successfully: " + JSON.stringify(result));
+        await response.json();
+        alert("Form submitted successfully!");
         this.closeForm();
       } catch (error) {
         alert("Error: " + error.message);
@@ -117,17 +149,103 @@ export default {
     },
     resetForm() {
       this.formData = {
+        trtype_id: "",
+        from_account_id: "",
+        to_account_id: "",
+        trcategory_id: "",
+        tr_date: "",
         amount: "",
-        category: "",
-        accountFrom: "",
-        accountTo: "",
         description: "",
-        date: ""  // Reset date field
       };
+    },
+    async fetchAccounts() {
+      try {
+        const response = await fetch("http://localhost:5000/accounts", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        this.accounts = data;
+        this.accounts.shift();
+        console.log("Fetched Accounts");
+      } catch (error) {
+        console.error("Failed to fetch accounts:", error.message);
+      }
+    },
+    async fetchCategories() {
+      try {
+        const response = await fetch(`http://localhost:5000/trcat/` + this.formData.trtype_id, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        this.categories = data;
+        console.log("Fetched Categories");
+      } catch (error) {
+        console.error("Failed to fetch categories:", error.message);
+      }
+    },
+    async fetchTransaction(){
+      try {
+        const response = await fetch(`http://localhost:5000/transactions/` + this.tr_id, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        this.formData.trtype_id = data.type.trtype_id;
+        this.formData.from_account_id = data.fromAccount.account_id;
+        this.formData.to_account_id = data.toAccount.account_id;
+        this.formData.trcategory_id = data.category.trcategory_id;
+        this.formData.tr_date = data.tr_date.split("T")[0];
+        this.formData.amount = data.amount;
+        this.formData.description = data.description;
+        if(data.type.trtype_id == 1){
+          this.showForm("income");
+          document.getElementById("accountsTo").value = data.toAccount.account_id;
+          document.getElementById("category").value = data.category.trcategory_id;
+        } else if(data.type.trtype_id == 2){
+          this.showForm("expenses");
+          document.getElementById("accountsFrom").value = data.fromAccount.account_id;
+          document.getElementById("category").value = data.category.trcategory_id;
+        } else {
+          this.showForm("transfer");
+          document.getElementById("accountsTo").value = data.toAccount.account_id;
+          document.getElementById("accountsFrom").value = data.fromAccount.account_id;
+        }
+        console.log("Fetched Categories");
+      } catch (error) {
+        console.error("Failed to fetch categories:", error.message);
+      }
     }
   },
   mounted(){
-    this.currentForm = 'expenses';
+    this.fetchAccounts();
+    if(this.formType == 2){
+      this.fetchTransaction();
+    } else {
+      this.showForm('expenses');
+    }
   }
 };
 </script>

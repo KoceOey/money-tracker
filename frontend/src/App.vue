@@ -4,10 +4,8 @@
       <!-- Sidebar -->
       <div class="sidebar">
         <h2>Money Tracker</h2>
-        <button @click="navigate('Home')">Home</button>
         <button @click="navigate('Transaction')">Transaction</button>
         <button @click="navigate('Accounts')">Accounts</button>
-        <button @click="navigate('Settings')">Settings</button>
       </div>
 
       <!-- Main Content -->
@@ -26,14 +24,12 @@
 // Import components for each page
 import TransactionSection from './components/TransactionSection.vue';
 import AccountsSection from './components/AccountsSection.vue';
-import SettingsSection from './components/SettingsSection.vue';
-import HomeSection from './components/HomeSection.vue';
 
 export default {
   data() {
     return {
-      currentPage: 'Home', // Default page
-      title: 'Home'
+      currentPage: 'Transaction', // Default page
+      title: 'Transaction'
     };
   },
   methods: {
@@ -43,9 +39,7 @@ export default {
     },
   },
   components: {
-    HomeSection,
     TransactionSection,
-    SettingsSection,
     AccountsSection,
   },
 };
@@ -55,6 +49,10 @@ export default {
 body {
     margin: 0;
     height: 100%;
+}
+
+h2{
+  font-size: 32px;
 }
 
 #app {
@@ -82,17 +80,20 @@ body {
 }
 
 .sidebar button {
-  background-color: #34495e;
+  background-color: #967B6B;
   color: white;
   border: none;
+  border-bottom: 3px solid #CDB599;
   padding: 10px;
   cursor: pointer;
+  font-size: 24px;
   text-align: left;
-  border-radius: 4px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .sidebar button:hover {
-  background-color: #1abc9c;
+  background-color: #CDB599;
+  color:black;
 }
 
 /* Main content styling */
