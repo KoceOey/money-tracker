@@ -1,12 +1,13 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const multer = require('multer');
 const cors = require('cors');
 
 const app = express();
+const upload = multer();
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(upload.none());
 
 // Routes
 const routes = require('./routes');
