@@ -7,7 +7,7 @@
           <td class="name">{{ account.account_name }}</td>
           <td class="desc">{{ account.description }}</td>
           <td class="amount">{{ account.balance }}</td>
-          <td class="btn">
+          <!-- <td class="btn">
             <button>
               <img src="../assets/edit.png" alt="Edit">
             </button>
@@ -16,7 +16,7 @@
             <button>
               <img src="../assets/bin.png" alt="Delete">
             </button>
-          </td>
+          </td> -->
         </tr>
       </table>
     </div>
@@ -112,6 +112,7 @@ td {
 .amount{
   width: 20%;
   font-size: 22px;
+  text-align: right;
 }
 
 .btn{
